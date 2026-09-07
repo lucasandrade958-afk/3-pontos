@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Executivo - Multi-Empresas & Over Red</title>
+    <!-- Importando o Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --text-muted: #555555;
+            --border-color: #dcdcdc;
+            --input-bg: #ffffff;
+            --input-text: #333333;
+            --primary: #3498db;
+            --primary-hover: #2980b9;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --card-sub-bg: #f8f9fa;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --text-muted: #aaaaaa;
+            --border-color: #333333;
+            --input-bg: #2a2a2a;
+            --input-text: #ffffff;
+            --primary: #2980b9;
+            --primary-hover: #3498db;
+            --success: #27ae60;
+            --danger: #c0392b;
+            --card-sub-bg: #252525;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1250px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h2 { margin: 0; font-size: 22px; }
+
+        .topo-controles {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--input-text);
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            padding: 8px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .theme-toggle:hover { background: var(--border-color); }
+
+        .summary-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .summary-card h4 { margin: 0 0 8px 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.85; }
+        .summary-card p { font-size: 20px; font-weight: bold; margin: 0; background: #34495e; padding: 8px; border-radius: 6px; }
+
+        .empresa-wrapper {
+            background: var(--card-sub-bg);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .empresa-flex {
+            display: flex;
+            flex-wrap: wrap;
+            margin: -6px;
+            align-items: flex-end;
+        }
+
+        .input-group {
+            flex: 1 1 110px;
+            margin: 6px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group.empresa-nome {
+            flex: 2 1 160px;
+        }
+
+        .input-group label {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-muted);
+        }
+
+        .input-group input {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-bg);
+            color: var(--input-text);
+            border-radius: 6px;
+            font-size: 13px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .btn-remover {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 6px;
+            height: 35px;
+        }
+        .btn-remover:hover { opacity: 0.8; }
+
+        .empresa-resumo-bloco {
+            margin-top: 15px;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 15px;
+        }
+
+        .empresa-resumo-bloco h4 {
+            margin: 0 0 10px 0;
+            font-size: 15px;
+            color: var(--text-color);
+        }
+
+        .cards-flex {
+            display: flex;
+            flex-wrap: wrap;
+            margin: -6px;
+        }
+
+        .card {
+            flex: 1 1 140px;
+            margin: 6px;
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 5px solid var(--border-color);
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            box-sizing: border-box;
+        }
+
+        .card h5 { margin: 0 0 5px 0; font-size: 11px; color: var(--text-muted); }
+        .card p { font-size: 15px; font-weight: bold; margin: 0; }
+        .card span.valor-monetario { font-size: 11px; color: var(--text-muted); display: block; margin-top: 3px; }
+
+        .status-ok { border-left-color: var(--success); color: var(--success); }
+        .status-danger { border-left-color: var(--danger); color: var(--danger); }
+
+        .acoes-topo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+            margin-top: 15px;
+        }
+
+        .btn-principal {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn-principal:hover { background-color: var(--primary-hover); }
+        .btn-adicionar { background-color: var(--success); }
+        .btn-salvar { background-color: #8e44ad; }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .chart-full {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 900px) {
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+
+        .chart-box {
+            position: relative;
+            height: 380px;
+            background: var(--card-sub-bg);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-flex">
+            <h2>Dashboard Executivo - Gestão de Resultados & Over Red</h2>
+            <div class="topo-controles">
+                <!-- Filtro Principal por Empresa -->
+                <select id="selectFiltroEmpresaGlobal" onchange="atualizarDashboard()">
+                    <option value="todas">🏢 Todas as Empresas (Consolidado)</option>
+                </select>
+
+                <select id="selectVisao" onchange="alternarVisao()">
+                    <option value="mensal">📅 Visão Mensal / Evolutiva (Jan - Dez)</option>
+                    <option value="consolidado">📊 Visão Consolidada Anual</option>
+                </select>
+
+                <select id="selectMes" onchange="atualizarDashboard()">
+                    <option value="0">Janeiro</option>
+                    <option value="1">Fevereiro</option>
+                    <option value="2">Março</option>
+                    <option value="3">Abril</option>
+                    <option value="4">Maio</option>
+                    <option value="5">Junho</option>
+                    <option value="6">Julho</option>
+                    <option value="7">Agosto</option>
+                    <option value="8">Setembro</option>
+                    <option value="9">Outubro</option>
+                    <option value="10">Novembro</option>
+                    <option value="11">Dezembro</option>
+                </select>
+
+                <button class="theme-toggle" onclick="alternarTema()">🌙 Tema</button>
+            </div>
+        </div>
+
+        <!-- Cards Globais / da Empresa Selecionada -->
+        <div class="summary-cards-grid" id="summaryCardsGrid">
+            <div class="summary-card">
+                <h4 id="lblCardRec">Receita (Entradas)</h4>
+                <p id="cardReceitaAnual">R$ 0,00</p>
+            </div>
+            <div class="summary-card">
+                <h4 id="lblCardDesp">Despesa (Saídas)</h4>
+                <p id="cardDespesaAnual">R$ 0,00</p>
+            </div>
+            <div class="summary-card">
+                <h4>Lucro Líquido</h4>
+                <p id="cardLucroAnual">R$ 0,00</p>
+            </div>
+            <div class="summary-card">
+                <h4>Margem de Lucro</h4>
+                <p id="cardMargemAnual">0,0%</p>
+            </div>
+        </div>
+
+        <!-- Inputs e Cards Detalhados por Empresa -->
+        <div id="lista-empresas"></div>
+
+        <div class="acoes-topo">
+            <button class="btn-principal btn-adicionar" onclick="adicionarEmpresa()">+ Adicionar Empresa</button>
+            <button class="btn-principal btn-salvar" onclick="salvarDados()">💾 Salvar Dados</button>
+            <button class="btn-principal" onclick="atualizarDashboard()">Atualizar Dashboard</button>
+        </div>
+        
+        <!-- Gráficos Visão Mensal / Evolutiva -->
+        <div class="charts-grid" id="chartsGridMensal">
+            <div class="chart-box">
+                <canvas id="graficoReceitasMensais"></canvas>
+            </div>
+            <div class="chart-box">
+                <canvas id="graficoDespesasMensais"></canvas>
+            </div>
+            <div class="chart-box">
+                <canvas id="graficoRecDespEmpilhado"></canvas>
+            </div>
+            <div class="chart-box">
+                <canvas id="graficoLucroLiquidoMensal"></canvas>
+            </div>
+        </div>
+
+        <!-- Gráficos Visão Consolidada Anual -->
+        <div class="charts-grid" id="chartsGridConsolidado" style="display: none;">
+            <div class="chart-box chart-full">
+                <canvas id="graficoEvolucaoMisturada"></canvas>
+            </div>
+            <div class="chart-box chart-full">
+                <canvas id="graficoVariacaoDespesas"></canvas>
+            </div>
+            <div class="chart-box">
+                <canvas id="graficoCustosPercentuaisEmpresa"></canvas>
+            </div>
+            <div class="chart-box">
+                <canvas id="graficoRoscaConsolidado"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let graficoRecM, graficoDespM, graficoCompM, graficoLucroM;
+        let graficoMisto, graficoVariacao, graficoCustosPerc, graficoRosca;
+
+        let empresas = JSON.parse(localStorage.getItem('dados_empresas_overred')) || [
+            { 
+                nome: "Empresa Alpha", 
+                meses: Array.from({length: 12}, () => ({ fat: 60000, folha: 5000, impostos: 5800, aluguel: 4500, cmv: 21000, outras: 3000 }))
+            },
+            { 
+                nome: "Empresa Beta", 
+                meses: Array.from({length: 12}, () => ({ fat: 40000, folha: 4500, impostos: 3800, aluguel: 4200, cmv: 14000, outras: 2000 }))
+            }
+        ];
+
+        const nomesMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+        function formatarMoedaInput(valor) {
+            return Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function formatarMoedaBruta(valor) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+        }
+
+        function atualizarSelectFiltroGlobal() {
+            const select = document.getElementById('selectFiltroEmpresaGlobal');
+            const valorAtual = select.value;
+            select.innerHTML = '<option value="todas">🏢 Todas as Empresas (Consolidado)</option>';
+            empresas.forEach((emp, index) => {
+                const opt = document.createElement('option');
+                opt.value = index;
+                opt.text = emp.nome;
+                select.appendChild(opt);
+            });
+            select.value = valorAtual;
+        }
+
+        function renderizarFormulario() {
+            const mesIdx = document.getElementById('selectMes').value;
+            const filtroGlobal = document.getElementById('selectFiltroEmpresaGlobal').value;
+            const container = document.getElementById('lista-empresas');
+            container.innerHTML = `<h3 style="margin-bottom: 15px;">Editando competência do mês: <span style="color:var(--primary);">${nomesMeses[mesIdx]}</span></h3>`;
+
+            empresas.forEach((emp, index) => {
+                // Se houver filtro global por empresa e não for "todas", exibe apenas a empresa selecionada
+                if (filtroGlobal !== 'todas' && parseInt(filtroGlobal) !== index) return;
+
+                const m = emp.meses[mesIdx];
+                const fat = m.fat > 0 ? m.fat : 1;
+                const folha = m.folha;
+                const impostos = m.impostos;
+                const aluguel = m.aluguel;
+                const cmv = m.cmv;
+                const outras = m.outras;
+
+                const pFolha = (folha / fat) * 100;
+                const pImpostos = (impostos / fat) * 100;
+                const pAluguel = (aluguel / fat) * 100;
+                const pCmv = (cmv / fat) * 100;
+
+                const margemContribuicao = fat - cmv - impostos;
+                const pMargemContribuicao = (margemContribuicao / fat) * 100;
+
+                const mesAntIdx = Number(mesIdx) > 0 ? Number(mesIdx) - 1 : 0;
+                const mAnt = emp.meses[mesAntIdx];
+                const despAtual = folha + impostos + aluguel + cmv + outras;
+                const despAnt = mAnt.folha + mAnt.impostos + mAnt.aluguel + mAnt.cmv + mAnt.outras;
+                const variacaoDespesa = despAnt > 0 ? ((despAtual - despAnt) / despAnt) * 100 : 0;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'empresa-wrapper';
+                wrapper.innerHTML = `
+                    <div class="empresa-flex">
+                        <div class="input-group empresa-nome">
+                            <label>Nome da Empresa</label>
+                            <input type="text" value="${emp.nome}" oninput="empresas[${index}].nome = this.value; salvarAutomatico(); atualizarSelectFiltroGlobal();">
+                        </div>
+                        <div class="input-group">
+                            <label>Faturamento</label>
+                            <input type="text" value="${formatarMoedaInput(m.fat)}" oninput="atualizarCampo(${index}, ${mesIdx}, 'fat', this)">
+                        </div>
+                        <div class="input-group">
+                            <label>Folha</label>
+                            <input type="text" value="${formatarMoedaInput(m.folha)}" oninput="atualizarCampo(${index}, ${mesIdx}, 'folha', this)">
+                        </div>
+                        <div class="input-group">
+                            <label>Impostos</label>
+                            <input type="text" value="${formatarMoedaInput(m.impostos)}" oninput="atualizarCampo(${index}, ${mesIdx}, 'impostos', this)">
+                        </div>
+                        <div class="input-group">
+                            <label>Aluguel</label>
+                            <input type="text" value="${formatarMoedaInput(m.aluguel)}" oninput="atualizarCampo(${index}, ${mesIdx}, 'aluguel', this)">
+                        </div>
+                        <div class="input-group">
+                            <label>CMV / CPV</label>
+                            <input type="text" value="${formatarMoedaInput(m.cmv)}" oninput="atualizarCampo(${index}, ${mesIdx}, 'cmv', this)">
+                        </div>
+                        <div class="input-group">
+                            <label>Outras Desp.</label>
+                            <input type="text" value="${formatarMoedaInput(m.outras)}" oninput="atualizarCampo(${index}, ${mesIdx}, 'outras', this)">
+                        </div>
+                        <button class="btn-remover" onclick="removerEmpresa(${index})" title="Excluir">🗑️</button>
+                    </div>
+
+                    <div class="empresa-resumo-bloco">
+                        <h4>Indicadores de ${emp.nome} (${nomesMeses[mesIdx]}) — Fat: ${formatarMoedaBruta(m.fat)}</h4>
+                        <div class="cards-flex">
+                            <div class="card ${pFolha > 10 ? 'status-danger' : 'status-ok'}">
+                                <h5>Folha</h5>
+                                <p>${pFolha.toFixed(1)}%</p>
+                                <span class="valor-monetario">${formatarMoedaBruta(folha)}</span>
+                            </div>
+                            <div class="card ${pImpostos > 10 ? 'status-danger' : 'status-ok'}">
+                                <h5>Impostos</h5>
+                                <p>${pImpostos.toFixed(1)}%</p>
+                                <span class="valor-monetario">${formatarMoedaBruta(impostos)}</span>
+                            </div>
+                            <div class="card ${pAluguel > 10 ? 'status-danger' : 'status-ok'}">
+                                <h5>Aluguel</h5>
+                                <p>${pAluguel.toFixed(1)}%</p>
+                                <span class="valor-monetario">${formatarMoedaBruta(aluguel)}</span>
+                            </div>
+                            <div class="card ${pCmv > 35 ? 'status-danger' : 'status-ok'}">
+                                <h5>CMV</h5>
+                                <p>${pCmv.toFixed(1)}%</p>
+                                <span class="valor-monetario">${formatarMoedaBruta(cmv)}</span>
+                            </div>
+                            <div class="card ${pMargemContribuicao < 40 ? 'status-danger' : 'status-ok'}">
+                                <h5>Margem Contr.</h5>
+                                <p>${pMargemContribuicao.toFixed(1)}%</p>
+                                <span class="valor-monetario">${formatarMoedaBruta(margemContribuicao)}</span>
+                            </div>
+                            <div class="card ${variacaoDespesa > 0 ? 'status-danger' : 'status-ok'}">
+                                <h5>Var. Despesas</h5>
+                                <p>${variacaoDespesa > 0 ? '📈 +' : '📉 '}${variacaoDespesa.toFixed(1)}%</p>
+                                <span class="valor-monetario">vs. Mês Ant.</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(wrapper);
+            });
+            atualizarSelectFiltroGlobal();
+        }
+
+        function atualizarCampo(empIdx, mesIdx, campo, elemento) {
+            let limpo = elemento.value.replace(/\D/g, '');
+            let numero = Number(limpo) / 100;
+            empresas[empIdx].meses[mesIdx][campo] = numero;
+            elemento.value = formatarMoedaInput(numero);
+            salvarAutomatico();
+            renderizarFormulario();
+            atualizarDashboard();
+        }
+
+        function adicionarEmpresa() {
+            empresas.push({
+                nome: "Nova Empresa",
+                meses: Array.from({length: 12}, () => ({ fat: 50000, folha: 4000, impostos: 4000, aluguel: 4000, cmv: 15000, outras: 2000 }))
+            });
+            renderizarFormulario();
+            atualizarDashboard();
+            salvarAutomatico();
+        }
+
+        function removerEmpresa(index) {
+            if(empresas.length === 1) {
+                alert("Mantenha ao menos uma empresa.");
+                return;
+            }
+            empresas.splice(index, 1);
+            document.getElementById('selectFiltroEmpresaGlobal').value = 'todas';
+            renderizarFormulario();
+            atualizarDashboard();
+            salvarAutomatico();
+        }
+
+        function salvarAutomatico() {
+            localStorage.setItem('dados_empresas_overred', JSON.stringify(empresas));
+        }
+
+        function salvarDados() {
+            salvarAutomatico();
+            alert("Dados salvos com sucesso no navegador!");
+        }
+
+        function alternarVisao() {
+            const visao = document.getElementById('selectVisao').value;
+            const gridMensal = document.getElementById('chartsGridMensal');
+            const gridConsolidado = document.getElementById('chartsGridConsolidado');
+
+            if (visao === 'mensal') {
+                gridMensal.style.display = 'grid';
+                gridConsolidado.style.display = 'none';
+            } else {
+                gridMensal.style.display = 'none';
+                gridConsolidado.style.display = 'grid';
+            }
+            atualizarDashboard();
+        }
+
+        function atualizarDashboard() {
+            const filtroGlobal = document.getElementById('selectFiltroEmpresaGlobal').value;
+            
+            let receitasMensais = Array(12).fill(0);
+            let despesasMensais = Array(12).fill(0);
+            let lucroMensal = Array(12).fill(0);
+
+            let receitaTotalAno = 0;
+            let despesaTotalAno = 0;
+
+            let faturamentoPorEmpresaConsolidado = [];
+            let despesasPorEmpresaConsolidado = [];
+            let nomesEmpresas = [];
+            let variacaoDespesasArray = [];
+            
+            let custosPercentuaisData = { folha: [], impostos: [], aluguel: [], cmv: [] };
+
+            const mesAtualIdx = parseInt(document.getElementById('selectMes').value);
+
+            empresas.forEach((emp, eIdx) => {
+                const isFiltered = (filtroGlobal === 'todas' || parseInt(filtroGlobal) === eIdx);
+                if (isFiltered) {
+                    nomesEmpresas.push(emp.nome);
+                }
+
+                let fatEmpresaTotal = 0;
+                let despEmpresaTotal = 0;
+
+                let rcM = Array(12).fill(0);
+                let dpM = Array(12).fill(0);
+                let lcM = Array(12).fill(0);
+
+                emp.meses.forEach((m, mIdx) => {
+                    let totalDespM = m.folha + m.impostos + m.aluguel + m.cmv + m.outras;
+                    
+                    rcM[mIdx] = m.fat;
+                    dpM[mIdx] = totalDespM;
+                    lcM[mIdx] = m.fat - totalDespM;
+
+                    fatEmpresaTotal += m.fat;
+                    despEmpresaTotal += totalDespM;
+
+                    if (isFiltered) {
+                        receitaTotalAno += m.fat;
+                        despesaTotalAno += totalDespM;
+                    }
+                });
+
+                // Se houver filtro por empresa, os gráficos mensais mostram somente essa empresa
+                if (filtroGlobal !== 'todas' && parseInt(filtroGlobal) === eIdx) {
+                    receitasMensais = rcM;
+                    despesasMensais = dpM;
+                    lucroMensal = lcM;
+                } else if (filtroGlobal === 'todas') {
+                    emp.meses.forEach((m, mIdx) => {
+                        let totalDespM = m.folha + m.impostos + m.aluguel + m.cmv + m.outras;
+                        receitasMensais[mIdx] += m.fat;
+                        despesasMensais[mIdx] += totalDespM;
+                        lucroMensal[mIdx] += (m.fat - totalDespM);
+                    });
+                }
+
+                if (isFiltered) {
+                    faturamentoPorEmpresaConsolidado.push(fatEmpresaTotal);
+                    despesasPorEmpresaConsolidado.push(despEmpresaTotal);
+
+                    const mRef = emp.meses[mesAtualIdx];
+                    const fatRef = mRef.fat > 0 ? mRef.fat : 1;
+                    custosPercentuaisData.folha.push(((mRef.folha / fatRef) * 100).toFixed(1));
+                    custosPercentuaisData.impostos.push(((mRef.impostos / fatRef) * 100).toFixed(1));
+                    custosPercentuaisData.aluguel.push(((mRef.aluguel / fatRef) * 100).toFixed(1));
+                    custosPercentuaisData.cmv.push(((mRef.cmv / fatRef) * 100).toFixed(1));
+
+                    const mesAntIdx = mesAtualIdx > 0 ? mesAtualIdx - 1 : 0;
+                    const despAtual = mRef.folha + mRef.impostos + mRef.aluguel + mRef.cmv + mRef.outras;
+                    const despAnt = emp.meses[mesAntIdx].folha + emp.meses[mesAntIdx].impostos + emp.meses[mesAntIdx].aluguel + emp.meses[mesAntIdx].cmv + emp.meses[mesAntIdx].outras;
+                    let varDesp = despAnt > 0 ? ((despAtual - despAnt) / despAnt) * 100 : 0;
+                    variacaoDespesasArray.push(varDesp.toFixed(1));
+                }
+            });
+
+            const lucroLiquidoAno = receitaTotalAno - despesaTotalAno;
+            const margemLucroAno = receitaTotalAno > 0 ? (lucroLiquidoAno / receitaTotalAno) * 100 : 0;
+
+            document.getElementById('cardReceitaAnual').innerText = formatarMoedaBruta(receitaTotalAno);
+            document.getElementById('cardDespesaAnual').innerText = formatarMoedaBruta(despesaTotalAno);
+            document.getElementById('cardLucroAnual').innerText = formatarMoedaBruta(lucroLiquidoAno);
+            document.getElementById('cardMargemAnual').innerText = margemLucroAno.toFixed(2) + '%';
+
+            renderizarGraficosMensais(receitasMensais, despesasMensais, lucroMensal);
+            renderizarGraficosConsolidados(nomesEmpresas, faturamentoPorEmpresaConsolidado, despesasPorEmpresaConsolidado, variacaoDespesasArray, custosPercentuaisData, receitaTotalAno, despesaTotalAno);
+            renderizarFormulario();
+        }
+
+        function renderizarGraficosMensais(receitas, despesas, lucro) {
+            if (graficoRecM) graficoRecM.destroy();
+            graficoRecM = new Chart(document.getElementById('graficoReceitasMensais').getContext('2d'), {
+                type: 'bar',
+                data: { labels: nomesMeses, datasets: [{ label: 'Receitas (Entradas)', data: receitas, backgroundColor: '#3498db' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Receitas Mensais' } } }
+            });
+
+            if (graficoDespM) graficoDespM.destroy();
+            graficoDespM = new Chart(document.getElementById('graficoDespesasMensais').getContext('2d'), {
+                type: 'bar',
+                data: { labels: nomesMeses, datasets: [{ label: 'Despesas (Saídas)', data: despesas, backgroundColor: '#e74c3c' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Despesas Mensais' } } }
+            });
+
+            if (graficoCompM) graficoCompM.destroy();
+            graficoCompM = new Chart(document.getElementById('graficoRecDespEmpilhado').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: nomesMeses,
+                    datasets: [
+                        { label: 'Receitas', data: receitas, backgroundColor: '#3498db' },
+                        { label: 'Despesas', data: despesas, backgroundColor: '#e74c3c' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Receitas x Despesas por Mês' } } }
+            });
+
+            if (graficoLucroM) graficoLucroM.destroy();
+            graficoLucroM = new Chart(document.getElementById('graficoLucroLiquidoMensal').getContext('2d'), {
+                type: 'bar',
+                data: { labels: nomesMeses, datasets: [{ label: 'Lucro Líquido', data: lucro, backgroundColor: '#2ecc71' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Lucro Líquido Mensal' } } }
+            });
+        }
+
+        function renderizarGraficosConsolidados(labels, fatEmpresas, despEmpresas, variacaoDespesas, custosData, recTotal, despTotal) {
+            if (graficoMisto) graficoMisto.destroy();
+            graficoMisto = new Chart(document.getElementById('graficoEvolucaoMisturada').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { type: 'bar', label: 'Faturamento (R$)', data: fatEmpresas, backgroundColor: '#2ecc71', order: 2 },
+                        { type: 'line', label: 'Despesas Totais (R$)', data: despEmpresas, borderColor: '#e74c3c', backgroundColor: '#e74c3c', borderWidth: 3, pointRadius: 5, fill: false, order: 1 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Evolução: Faturamento (Colunas) x Despesas (Linha)' } } }
+            });
+
+            if (graficoVariacao) graficoVariacao.destroy();
+            const cores = variacaoDespesas.map(v => Number(v) > 0 ? '#e74c3c' : '#2ecc71');
+            graficoVariacao = new Chart(document.getElementById('graficoVariacaoDespesas').getContext('2d'), {
+                type: 'bar',
+                data: { labels: labels, datasets: [{ label: 'Variação de Despesas (%)', data: variacaoDespesas, backgroundColor: cores }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Acompanhamento: Crescimento de Despesas vs. Mês Anterior (Verde = Reduziu, Vermelho = Cresceu)' } } }
+            });
+
+            if (graficoCustosPerc) graficoCustosPerc.destroy();
+            graficoCustosPerc = new Chart(document.getElementById('graficoCustosPercentuaisEmpresa').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Folha (%)', data: custosData.folha, backgroundColor: '#3498db' },
+                        { label: 'Impostos (%)', data: custosData.impostos, backgroundColor: '#e67e22' },
+                        { label: 'Aluguel (%)', data: custosData.aluguel, backgroundColor: '#9b59b6' },
+                        { label: 'CMV (%)', data: custosData.cmv, backgroundColor: '#e74c3c' }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Comparativo de Custos Percentuais por Empresa' } } }
+            });
+
+            if (graficoRosca) graficoRosca.destroy();
+            graficoRosca = new Chart(document.getElementById('graficoRoscaConsolidado').getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Faturamento Total', 'Despesas Totais'],
+                    datasets: [{
+                        data: [recTotal, despTotal],
+                        backgroundColor: ['#2ecc71', '#e74c3c']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Consolidado: Faturamento vs Despesas' } } }
+            });
+        }
+
+        function alternarTema() {
+            const html = document.documentElement;
+            html.setAttribute('data-theme', html.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+        }
+
+        window.onload = () => {
+            atualizarSelectFiltroGlobal();
+            renderizarFormulario();
+            atualizarDashboard();
+        };
+    </script>
+</body>
+</html>
